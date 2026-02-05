@@ -1,3 +1,9 @@
+type AllocationSlice {
+  assetType: AssetType!
+  totalValue: Decimal!
+  percentage: Decimal!
+}
+
 type AssetGQL {
   id: ID!
   symbol: String!
@@ -24,6 +30,13 @@ enum AssetType {
   ETF
   BOND
   OTHER
+}
+
+type CategorySummary {
+  category: CategoryType!
+  totalAmount: Decimal!
+  percentage: Decimal!
+  transactionCount: Int!
 }
 
 type CategoryType {
@@ -60,6 +73,19 @@ input CreateExpenseInput {
 input CreatePortfolioInput {
   name: String!
   description: String = null
+}
+
+type DashboardSummary {
+  totalExpensesThisMonth: Decimal!
+  totalExpensesLastMonth: Decimal!
+  expenseChangePercent: Decimal
+  totalPortfolioValue: Decimal!
+  totalPortfolioCost: Decimal!
+  netWorth: Decimal!
+  topCategories: [CategorySummary!]!
+  recentExpenses: [ExpenseType!]!
+  portfolioAllocation: [AllocationSlice!]!
+  monthlyExpenseTrend: [MonthlyExpense!]!
 }
 
 """Date (isoformat)"""
@@ -105,6 +131,11 @@ type ExpenseType {
   updatedAt: DateTime!
 }
 
+type MonthlyExpense {
+  month: String!
+  totalAmount: Decimal!
+}
+
 type Mutation {
   createCategory(name: String!, color: String = null, icon: String = null): CategoryType!
   updateCategory(id: ID!, name: String = null, color: String = null, icon: String = null): CategoryType!
@@ -143,6 +174,7 @@ type Query {
   portfolios: [PortfolioType!]!
   portfolio(id: ID!): PortfolioType
   asset(id: ID!): AssetGQL
+  dashboard(month: String = null): DashboardSummary!
 }
 
 enum RecurrenceRule {
