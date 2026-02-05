@@ -1,17 +1,17 @@
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import Card from "../ui/Card";
 
 interface AllocationSlice {
   assetType: string;
-  totalValue: number;
-  percentage: number;
+  totalValue: number | string;
+  percentage: number | string;
 }
 
 interface PortfolioAllocationChartProps {
   data: AllocationSlice[];
 }
 
-const COLORS = ["#6366f1", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#ec4899"];
+const COLORS = ["#a78bfa", "#00ff88", "#38bdf8", "#fb923c", "#f472b6", "#facc15"];
 
 const typeLabels: Record<string, string> = {
   STOCK: "Stocks",
@@ -22,41 +22,116 @@ const typeLabels: Record<string, string> = {
   OTHER: "Other",
 };
 
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div
+        className="px-4 py-3 rounded-xl border border-[var(--border-medium)]"
+        style={{
+          background: "rgba(24, 24, 27, 0.95)",
+          backdropFilter: "blur(8px)",
+        }}
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <span
+            className="w-3 h-3 rounded-full"
+            style={{ background: payload[0].payload.fill }}
+          />
+          <p className="text-sm font-medium text-[var(--text-primary)]">{data.name}</p>
+        </div>
+        <p className="font-mono text-lg font-semibold text-[var(--text-primary)]">
+          ${data.value.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+        </p>
+        <p className="text-xs text-[var(--text-muted)]">{data.percentage.toFixed(1)}% of portfolio</p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function PortfolioAllocationChart({ data }: PortfolioAllocationChartProps) {
-  const chartData = data.map((d) => ({
+  const chartData = data.map((d, i) => ({
     name: typeLabels[d.assetType] ?? d.assetType,
-    value: d.totalValue,
-    percentage: d.percentage,
+    value: Number(d.totalValue),
+    percentage: Number(d.percentage),
+    fill: COLORS[i % COLORS.length],
   }));
+
+  const totalValue = chartData.reduce((sum, d) => sum + d.value, 0);
 
   return (
     <Card>
-      <h3 className="text-sm font-medium text-gray-500 mb-4">Portfolio Allocation</h3>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--accent-gain-soft)]">
+            <svg className="w-4 h-4" style={{ color: "var(--accent-gain)" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+            </svg>
+          </div>
+          <p className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+            Portfolio Allocation
+          </p>
+        </div>
+      </div>
+
       {chartData.length === 0 ? (
-        <p className="text-gray-400 text-center py-8">No investments yet</p>
+        <div className="flex items-center justify-center h-[200px]">
+          <p className="text-[var(--text-muted)]">No investments yet</p>
+        </div>
       ) : (
-        <ResponsiveContainer width="100%" height={240}>
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={90}
-              dataKey="value"
-              nameKey="name"
-              paddingAngle={2}
-            >
-              {chartData.map((_, index) => (
-                <Cell key={index} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip
-              formatter={(value: number) => `$${value.toFixed(2)}`}
-            />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
+        <div className="flex items-center gap-6">
+          {/* Chart */}
+          <div className="relative w-[160px] h-[160px] shrink-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={75}
+                  dataKey="value"
+                  paddingAngle={2}
+                  strokeWidth={0}
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={index} fill={entry.fill} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+            {/* Center label */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <p className="text-xs text-[var(--text-muted)] uppercase">Total</p>
+              <p className="font-mono text-sm font-bold text-[var(--text-primary)]">
+                ${totalValue >= 1000 ? `${(totalValue / 1000).toFixed(1)}k` : totalValue.toFixed(0)}
+              </p>
+            </div>
+          </div>
+
+          {/* Legend */}
+          <div className="flex-1 space-y-2">
+            {chartData.map((item, i) => (
+              <div key={i} className="flex items-center justify-between group">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full transition-transform group-hover:scale-125"
+                    style={{ background: item.fill }}
+                  />
+                  <span className="text-sm text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">
+                    {item.name}
+                  </span>
+                </div>
+                <span className="font-mono text-xs text-[var(--text-muted)]">
+                  {item.percentage.toFixed(1)}%
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </Card>
   );
