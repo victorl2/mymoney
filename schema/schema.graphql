@@ -1,7 +1,101 @@
-type Query {
-  health: String!
+type CategoryType {
+  id: ID!
+  name: String!
+  color: String!
+  icon: String
+  createdAt: DateTime!
+}
+
+input CreateExpenseInput {
+  amount: Decimal!
+  description: String!
+  date: Date!
+  categoryId: ID!
+  notes: String = null
+  isRecurring: Boolean! = false
+  recurrenceRule: RecurrenceRule = null
+}
+
+"""Date (isoformat)"""
+scalar Date
+
+"""Date with time (isoformat)"""
+scalar DateTime
+
+"""Decimal (fixed-point)"""
+scalar Decimal
+
+type ExpenseConnection {
+  items: [ExpenseType!]!
+  totalCount: Int!
+  hasMore: Boolean!
+}
+
+input ExpenseFilter {
+  categoryId: ID = null
+  startDate: Date = null
+  endDate: Date = null
+  minAmount: Decimal = null
+  maxAmount: Decimal = null
+  isRecurring: Boolean = null
+  search: String = null
+}
+
+enum ExpenseSortField {
+  DATE
+  AMOUNT
+}
+
+type ExpenseType {
+  id: ID!
+  amount: Decimal!
+  description: String!
+  notes: String
+  date: Date!
+  category: CategoryType!
+  isRecurring: Boolean!
+  recurrenceRule: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
 }
 
 type Mutation {
-  ping: String!
+  createCategory(name: String!, color: String = null, icon: String = null): CategoryType!
+  updateCategory(id: ID!, name: String = null, color: String = null, icon: String = null): CategoryType!
+  deleteCategory(id: ID!): Boolean!
+  createExpense(input: CreateExpenseInput!): ExpenseType!
+  updateExpense(id: ID!, input: UpdateExpenseInput!): ExpenseType!
+  deleteExpense(id: ID!): Boolean!
+}
+
+type Query {
+  health: String!
+  categories: [CategoryType!]!
+  category(id: ID!): CategoryType
+  expenses(filter: ExpenseFilter = null, sortBy: ExpenseSortField! = DATE, sortDirection: SortDirection! = DESC, limit: Int! = 20, offset: Int! = 0): ExpenseConnection!
+  expense(id: ID!): ExpenseType
+}
+
+enum RecurrenceRule {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum SortDirection {
+  ASC
+  DESC
+}
+
+input UpdateExpenseInput {
+  amount: Decimal = null
+  description: String = null
+  notes: String = null
+  date: Date = null
+  categoryId: ID = null
+  isRecurring: Boolean = null
+  recurrenceRule: RecurrenceRule = null
 }
