@@ -4,16 +4,21 @@ interface NetWorthCardProps {
   netWorth: number | string;
   totalPortfolioValue: number | string;
   totalPortfolioCost: number | string;
+  totalMonthlyIncome?: number | string;
+  incomeStreamsCount?: number;
 }
 
 export default function NetWorthCard({
   netWorth,
   totalPortfolioValue,
   totalPortfolioCost,
+  totalMonthlyIncome = 0,
+  incomeStreamsCount = 0,
 }: NetWorthCardProps) {
   const netWorthNum = Number(netWorth);
   const portfolioValueNum = Number(totalPortfolioValue);
   const portfolioCostNum = Number(totalPortfolioCost);
+  const monthlyIncomeNum = Number(totalMonthlyIncome);
   const gainLoss = portfolioValueNum - portfolioCostNum;
   const isPositive = gainLoss >= 0;
   const gainLossPercent = portfolioCostNum > 0 ? ((gainLoss / portfolioCostNum) * 100) : 0;
@@ -49,31 +54,35 @@ export default function NetWorthCard({
           ${netWorthNum.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </p>
 
-        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[var(--border-subtle)]">
+        <div className="grid grid-cols-3 gap-4 pt-4 border-t border-[var(--border-subtle)]">
           <div>
-            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Portfolio Value</p>
+            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Portfolio</p>
             <p className="font-mono text-lg font-semibold text-[var(--text-primary)]">
-              ${portfolioValueNum.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ${portfolioValueNum.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </p>
           </div>
           <div>
-            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Total P&L</p>
+            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Monthly Income</p>
+            <div className="flex items-center gap-2">
+              <p className="font-mono text-lg font-semibold text-[var(--chart-2)]">
+                +${monthlyIncomeNum.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              </p>
+              {incomeStreamsCount > 0 && (
+                <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[var(--chart-2)]/20 text-[var(--chart-2)]">
+                  {incomeStreamsCount}
+                </span>
+              )}
+            </div>
+          </div>
+          <div>
+            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">P&L</p>
             <div className="flex items-center gap-2">
               <p
                 className="font-mono text-lg font-semibold"
                 style={{ color: isPositive ? "var(--accent-gain)" : "var(--accent-loss)" }}
               >
-                {isPositive ? "+" : ""}${gainLoss.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </p>
-              <span
-                className="px-2 py-0.5 rounded-md text-xs font-medium"
-                style={{
-                  background: isPositive ? "var(--accent-gain-soft)" : "var(--accent-loss-soft)",
-                  color: isPositive ? "var(--accent-gain)" : "var(--accent-loss)",
-                }}
-              >
                 {isPositive ? "+" : ""}{gainLossPercent.toFixed(1)}%
-              </span>
+              </p>
             </div>
           </div>
         </div>

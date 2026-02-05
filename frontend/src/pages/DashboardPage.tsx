@@ -82,6 +82,8 @@ export default function DashboardPage() {
           netWorth={dashboard.netWorth}
           totalPortfolioValue={dashboard.totalPortfolioValue}
           totalPortfolioCost={dashboard.totalPortfolioCost}
+          totalMonthlyIncome={dashboard.totalMonthlyIncome}
+          incomeStreamsCount={dashboard.incomeStreamsCount}
         />
         <ExpenseSummaryCard
           totalThisMonth={dashboard.totalExpensesThisMonth}

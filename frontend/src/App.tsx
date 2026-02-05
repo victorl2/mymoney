@@ -3,6 +3,8 @@ import Layout from "./components/layout/Layout";
 import DashboardPage from "./pages/DashboardPage";
 import ExpensesPage from "./pages/ExpensesPage";
 import AddExpensePage from "./pages/AddExpensePage";
+import IncomePage from "./pages/IncomePage";
+import AddIncomePage from "./pages/AddIncomePage";
 import InvestmentsPage from "./pages/InvestmentsPage";
 import AddInvestmentPage from "./pages/AddInvestmentPage";
 
@@ -14,6 +16,8 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/expenses" element={<ExpensesPage />} />
         <Route path="/expenses/new" element={<AddExpensePage />} />
+        <Route path="/income" element={<IncomePage />} />
+        <Route path="/income/new" element={<AddIncomePage />} />
         <Route path="/investments" element={<InvestmentsPage />} />
         <Route path="/investments/new" element={<AddInvestmentPage />} />
       </Route>

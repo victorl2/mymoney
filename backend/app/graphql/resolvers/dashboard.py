@@ -27,6 +27,8 @@ class DashboardQuery:
             total_portfolio_value=data["total_portfolio_value"],
             total_portfolio_cost=data["total_portfolio_cost"],
             net_worth=data["net_worth"],
+            total_monthly_income=data["total_monthly_income"],
+            income_streams_count=data["income_streams_count"],
             top_categories=[
                 CategorySummary(
                     category=_to_category_type(c["category"]),

@@ -14,6 +14,11 @@ from app.graphql.resolvers.investment import (
     InvestmentMutation,
     InvestmentQuery,
 )
+from app.graphql.resolvers.income import (
+    IncomeConnection,
+    IncomeMutation,
+    IncomeQuery,
+)
 from app.graphql.resolvers.dashboard import DashboardQuery
 from app.graphql.types.dashboard import DashboardSummary
 from app.graphql.types.category import CategoryType
@@ -33,6 +38,8 @@ from app.graphql.inputs.investment import (
     UpdateAssetInput,
     UpdatePortfolioInput,
 )
+from app.graphql.inputs.income import CreateIncomeInput, UpdateIncomeInput
+from app.graphql.types.income import IncomeType
 
 
 @strawberry.type
@@ -82,6 +89,22 @@ class Query:
     @strawberry.field
     def asset(self, info: Info, id: strawberry.ID) -> AssetGQL | None:
         return InvestmentQuery().asset(info, id)
+
+    # ── Income ──
+
+    @strawberry.field
+    def incomes(
+        self,
+        info: Info,
+        is_active: bool | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> IncomeConnection:
+        return IncomeQuery().incomes(info, is_active, limit, offset)
+
+    @strawberry.field
+    def income(self, info: Info, id: strawberry.ID) -> IncomeType | None:
+        return IncomeQuery().income(info, id)
 
     # ── Dashboard ──
 
@@ -164,6 +187,22 @@ class Mutation:
     @strawberry.mutation
     def update_asset_price(self, info: Info, id: strawberry.ID, current_price: Decimal) -> AssetGQL:
         return InvestmentMutation().update_asset_price(info, id, current_price)
+
+    # ── Income ──
+
+    @strawberry.mutation
+    def create_income(self, info: Info, input: CreateIncomeInput) -> IncomeType:
+        return IncomeMutation().create_income(info, input)
+
+    @strawberry.mutation
+    def update_income(
+        self, info: Info, id: strawberry.ID, input: UpdateIncomeInput
+    ) -> IncomeType:
+        return IncomeMutation().update_income(info, id, input)
+
+    @strawberry.mutation
+    def delete_income(self, info: Info, id: strawberry.ID) -> bool:
+        return IncomeMutation().delete_income(info, id)
 
 
 schema = strawberry.Schema(query=Query, mutation=Mutation)

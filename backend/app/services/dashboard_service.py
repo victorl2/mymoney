@@ -9,6 +9,7 @@ from app.models.category import Category
 from app.models.expense import Expense
 from app.models.portfolio import Portfolio
 from app.services.investment_service import InvestmentService
+from app.services.income_service import IncomeService
 
 
 class DashboardService:
@@ -49,6 +50,11 @@ class DashboardService:
         portfolio_allocation = self._portfolio_allocation()
         monthly_trend = self._monthly_expense_trend(year, mon)
 
+        # Income totals
+        income_service = IncomeService(self.db)
+        total_monthly_income = income_service.get_total_monthly_income()
+        income_streams_count = income_service.get_active_income_count()
+
         return {
             "total_expenses_this_month": total_this_month,
             "total_expenses_last_month": total_last_month,
@@ -56,6 +62,8 @@ class DashboardService:
             "total_portfolio_value": portfolio_value,
             "total_portfolio_cost": portfolio_cost,
             "net_worth": net_worth,
+            "total_monthly_income": total_monthly_income,
+            "income_streams_count": income_streams_count,
             "top_categories": top_categories,
             "recent_expenses": recent_expenses,
             "portfolio_allocation": portfolio_allocation,
