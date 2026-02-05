@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@apollo/client";
+import { useQuery } from "@apollo/client/react";
 import { Link } from "react-router-dom";
 import { GET_PORTFOLIOS } from "../graphql/queries/investments";
 import PortfolioSummary from "../components/investments/PortfolioSummary";
@@ -15,23 +15,43 @@ export default function InvestmentsPage() {
   const portfolios = data?.portfolios ?? [];
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Investments</h1>
+    <div className="animate-fade-up">
+      {/* Header */}
+      <div className="flex items-end justify-between mb-8">
+        <div>
+          <p className="text-sm text-[var(--text-muted)] uppercase tracking-wider mb-1">Portfolio</p>
+          <h1 className="font-display text-4xl font-bold text-[var(--text-primary)]">Investments</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-2">
+            <span className="font-mono text-[var(--accent-gain)]">{portfolios.length}</span> active {portfolios.length === 1 ? "portfolio" : "portfolios"}
+          </p>
+        </div>
         <div className="flex gap-3">
           <Button variant="secondary" onClick={() => setShowCreateForm(true)}>
-            New Portfolio
+            <span className="flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              New Portfolio
+            </span>
           </Button>
           {portfolios.length > 0 && (
             <Link to={`/investments/new?portfolioId=${portfolios[0].id}`}>
-              <Button>Add Asset</Button>
+              <Button size="md">
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Asset
+                </span>
+              </Button>
             </Link>
           )}
         </div>
       </div>
 
+      {/* Create Portfolio Form */}
       {showCreateForm && (
-        <Card className="mb-6">
+        <Card className="mb-6 animate-fade-up" hover={false}>
           <CreatePortfolioForm
             onCreated={() => {
               setShowCreateForm(false);
@@ -42,19 +62,38 @@ export default function InvestmentsPage() {
         </Card>
       )}
 
+      {/* Content */}
       {loading ? (
-        <Card>
-          <div className="text-center py-8 text-gray-500">Loading...</div>
-        </Card>
+        <div className="space-y-6">
+          {[...Array(2)].map((_, i) => (
+            <div key={i}>
+              <div className="h-32 bg-[var(--bg-elevated)] rounded-2xl shimmer mb-3" />
+              <div className="h-48 bg-[var(--bg-elevated)] rounded-2xl shimmer" />
+            </div>
+          ))}
+        </div>
       ) : portfolios.length === 0 ? (
-        <Card>
-          <div className="text-center py-12 text-gray-500">
-            <p className="text-lg">No portfolios yet</p>
-            <p className="text-sm mt-1">Create a portfolio to start tracking your investments</p>
+        <Card hover={false}>
+          <div className="flex flex-col items-center justify-center py-16">
+            <div
+              className="w-20 h-20 mb-6 rounded-2xl flex items-center justify-center"
+              style={{
+                background: "linear-gradient(135deg, var(--accent-gain-soft), var(--accent-primary-soft))",
+              }}
+            >
+              <svg className="w-10 h-10 text-[var(--accent-gain)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </div>
+            <p className="text-xl font-medium text-[var(--text-primary)] mb-2">No portfolios yet</p>
+            <p className="text-sm text-[var(--text-muted)] mb-6">Create a portfolio to start tracking your investments</p>
+            <Button onClick={() => setShowCreateForm(true)}>
+              Create Your First Portfolio
+            </Button>
           </div>
         </Card>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-8 stagger-children">
           {portfolios.map((portfolio: {
             id: string;
             name: string;
@@ -86,11 +125,25 @@ export default function InvestmentsPage() {
                 totalGainLossPercent={portfolio.totalGainLossPercent}
                 assetCount={portfolio.assets.length}
               />
-              <Card className="mt-2">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-medium text-gray-700">Assets</h3>
+              <Card className="mt-3" hover={false}>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--accent-primary-soft)]">
+                      <svg className="w-4 h-4 text-[var(--accent-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                    </div>
+                    <h3 className="font-medium text-[var(--text-primary)]">Assets</h3>
+                  </div>
                   <Link to={`/investments/new?portfolioId=${portfolio.id}`}>
-                    <Button size="sm" variant="secondary">Add Asset</Button>
+                    <Button size="sm" variant="secondary">
+                      <span className="flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add
+                      </span>
+                    </Button>
                   </Link>
                 </div>
                 <AssetList assets={portfolio.assets} onRefetch={() => refetch()} />
