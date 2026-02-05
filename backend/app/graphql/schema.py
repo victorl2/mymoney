@@ -14,6 +14,8 @@ from app.graphql.resolvers.investment import (
     InvestmentMutation,
     InvestmentQuery,
 )
+from app.graphql.resolvers.dashboard import DashboardQuery
+from app.graphql.types.dashboard import DashboardSummary
 from app.graphql.types.category import CategoryType
 from app.graphql.types.expense import ExpenseType
 from app.graphql.types.investment import AssetGQL
@@ -80,6 +82,12 @@ class Query:
     @strawberry.field
     def asset(self, info: Info, id: strawberry.ID) -> AssetGQL | None:
         return InvestmentQuery().asset(info, id)
+
+    # ── Dashboard ──
+
+    @strawberry.field
+    def dashboard(self, info: Info, month: str | None = None) -> DashboardSummary:
+        return DashboardQuery().dashboard(info, month)
 
 
 @strawberry.type
