@@ -1,9 +1,50 @@
+type AssetGQL {
+  id: ID!
+  symbol: String!
+  name: String!
+  assetType: AssetType!
+  quantity: Decimal!
+  purchasePrice: Decimal!
+  purchaseDate: Date!
+  currentPrice: Decimal
+  currency: String!
+  notes: String
+  totalCost: Decimal!
+  currentValue: Decimal
+  gainLoss: Decimal
+  gainLossPercent: Decimal
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum AssetType {
+  STOCK
+  CRYPTO
+  FUND
+  ETF
+  BOND
+  OTHER
+}
+
 type CategoryType {
   id: ID!
   name: String!
   color: String!
   icon: String
   createdAt: DateTime!
+}
+
+input CreateAssetInput {
+  portfolioId: ID!
+  symbol: String!
+  name: String!
+  assetType: AssetType!
+  quantity: Decimal!
+  purchasePrice: Decimal!
+  purchaseDate: Date!
+  currentPrice: Decimal = null
+  currency: String! = "USD"
+  notes: String = null
 }
 
 input CreateExpenseInput {
@@ -14,6 +55,11 @@ input CreateExpenseInput {
   notes: String = null
   isRecurring: Boolean! = false
   recurrenceRule: RecurrenceRule = null
+}
+
+input CreatePortfolioInput {
+  name: String!
+  description: String = null
 }
 
 """Date (isoformat)"""
@@ -66,6 +112,26 @@ type Mutation {
   createExpense(input: CreateExpenseInput!): ExpenseType!
   updateExpense(id: ID!, input: UpdateExpenseInput!): ExpenseType!
   deleteExpense(id: ID!): Boolean!
+  createPortfolio(input: CreatePortfolioInput!): PortfolioType!
+  updatePortfolio(id: ID!, input: UpdatePortfolioInput!): PortfolioType!
+  deletePortfolio(id: ID!): Boolean!
+  createAsset(input: CreateAssetInput!): AssetGQL!
+  updateAsset(id: ID!, input: UpdateAssetInput!): AssetGQL!
+  deleteAsset(id: ID!): Boolean!
+  updateAssetPrice(id: ID!, currentPrice: Decimal!): AssetGQL!
+}
+
+type PortfolioType {
+  id: ID!
+  name: String!
+  description: String
+  assets: [AssetGQL!]!
+  totalValue: Decimal!
+  totalCost: Decimal!
+  totalGainLoss: Decimal!
+  totalGainLossPercent: Decimal!
+  createdAt: DateTime!
+  updatedAt: DateTime!
 }
 
 type Query {
@@ -74,6 +140,9 @@ type Query {
   category(id: ID!): CategoryType
   expenses(filter: ExpenseFilter = null, sortBy: ExpenseSortField! = DATE, sortDirection: SortDirection! = DESC, limit: Int! = 20, offset: Int! = 0): ExpenseConnection!
   expense(id: ID!): ExpenseType
+  portfolios: [PortfolioType!]!
+  portfolio(id: ID!): PortfolioType
+  asset(id: ID!): AssetGQL
 }
 
 enum RecurrenceRule {
@@ -90,6 +159,18 @@ enum SortDirection {
   DESC
 }
 
+input UpdateAssetInput {
+  symbol: String = null
+  name: String = null
+  assetType: AssetType = null
+  quantity: Decimal = null
+  purchasePrice: Decimal = null
+  purchaseDate: Date = null
+  currentPrice: Decimal = null
+  currency: String = null
+  notes: String = null
+}
+
 input UpdateExpenseInput {
   amount: Decimal = null
   description: String = null
@@ -98,4 +179,9 @@ input UpdateExpenseInput {
   categoryId: ID = null
   isRecurring: Boolean = null
   recurrenceRule: RecurrenceRule = null
+}
+
+input UpdatePortfolioInput {
+  name: String = null
+  description: String = null
 }
