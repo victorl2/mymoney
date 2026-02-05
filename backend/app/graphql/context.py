@@ -1,9 +1,8 @@
+from starlette.requests import Request
+
 from app.database import SessionLocal
 
 
-async def get_context():
+def get_context(request: Request) -> dict:
     db = SessionLocal()
-    try:
-        yield {"db": db}
-    finally:
-        db.close()
+    return {"db": db, "request": request}
