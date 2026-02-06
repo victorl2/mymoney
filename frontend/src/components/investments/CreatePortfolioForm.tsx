@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useMutation } from "@apollo/client/react";
 import { CREATE_PORTFOLIO } from "../../graphql/mutations/investments";
+import { GET_PORTFOLIOS } from "../../graphql/queries/investments";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface CreatePortfolioFormProps {
   onCreated: () => void;
@@ -10,6 +12,7 @@ interface CreatePortfolioFormProps {
 }
 
 export default function CreatePortfolioForm({ onCreated, onCancel }: CreatePortfolioFormProps) {
+  const { t } = useLanguage();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [createPortfolio, { loading }] = useMutation(CREATE_PORTFOLIO);
@@ -19,6 +22,7 @@ export default function CreatePortfolioForm({ onCreated, onCancel }: CreatePortf
     if (!name) return;
     await createPortfolio({
       variables: { input: { name, description: description || null } },
+      refetchQueries: [{ query: GET_PORTFOLIOS }],
     });
     onCreated();
   };
@@ -37,22 +41,22 @@ export default function CreatePortfolioForm({ onCreated, onCancel }: CreatePortf
           </svg>
         </div>
         <div>
-          <h3 className="font-display text-lg font-bold text-[var(--text-primary)]">Create Portfolio</h3>
-          <p className="text-xs text-[var(--text-muted)]">Give your new portfolio a name</p>
+          <h3 className="font-display text-lg font-bold text-[var(--text-primary)]">{t("investments.createPortfolio")}</h3>
+          <p className="text-xs text-[var(--text-muted)]">{t("investments.subtitle")}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <Input
-          label="Portfolio Name"
-          placeholder="e.g., Retirement"
+          label={t("investments.portfolioName")}
+          placeholder=""
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
         />
         <Input
-          label="Description (optional)"
-          placeholder="Long-term investments"
+          label={t("investments.description")}
+          placeholder=""
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
@@ -66,14 +70,14 @@ export default function CreatePortfolioForm({ onCreated, onCancel }: CreatePortf
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
-              Creating...
+              {t("common.loading")}
             </span>
           ) : (
-            "Create Portfolio"
+            t("investments.createPortfolio")
           )}
         </Button>
         <Button type="button" variant="secondary" onClick={onCancel}>
-          Cancel
+          {t("common.cancel")}
         </Button>
       </div>
     </form>

@@ -19,10 +19,15 @@ from app.graphql.resolvers.income import (
     IncomeMutation,
     IncomeQuery,
 )
+from app.graphql.resolvers.settings import (
+    SettingsQuery,
+    SettingsMutation,
+)
+from app.graphql.resolvers.exchange_rate import ExchangeRateQuery
 from app.graphql.resolvers.dashboard import DashboardQuery
 from app.graphql.types.dashboard import DashboardSummary
 from app.graphql.types.category import CategoryType
-from app.graphql.types.expense import ExpenseType
+from app.graphql.types.expense import ExpenseType, ExpenseSummaryType
 from app.graphql.types.investment import AssetGQL
 from app.graphql.types.portfolio import PortfolioType
 from app.graphql.inputs.expense import (
@@ -40,6 +45,8 @@ from app.graphql.inputs.investment import (
 )
 from app.graphql.inputs.income import CreateIncomeInput, UpdateIncomeInput
 from app.graphql.types.income import IncomeType
+from app.graphql.types.settings import UserSettingsType, CurrencyType, LanguageType, UpdateSettingsInput
+from app.graphql.types.exchange_rate import ExchangeRatesResponse
 
 
 @strawberry.type
@@ -76,6 +83,12 @@ class Query:
     def expense(self, info: Info, id: strawberry.ID) -> ExpenseType | None:
         return ExpenseQuery().expense(info, id)
 
+    @strawberry.field
+    def expense_summary(
+        self, info: Info, month: int | None = None, year: int | None = None
+    ) -> ExpenseSummaryType:
+        return ExpenseQuery().expense_summary(info, month, year)
+
     # ── Investments ──
 
     @strawberry.field
@@ -105,6 +118,26 @@ class Query:
     @strawberry.field
     def income(self, info: Info, id: strawberry.ID) -> IncomeType | None:
         return IncomeQuery().income(info, id)
+
+    # ── Settings ──
+
+    @strawberry.field
+    def settings(self, info: Info) -> UserSettingsType:
+        return SettingsQuery().settings(info)
+
+    @strawberry.field
+    def supported_currencies(self) -> list[CurrencyType]:
+        return SettingsQuery().supported_currencies()
+
+    @strawberry.field
+    def supported_languages(self) -> list[LanguageType]:
+        return SettingsQuery().supported_languages()
+
+    # ── Exchange Rates ──
+
+    @strawberry.field
+    async def exchange_rates(self, base: str = "USD") -> ExchangeRatesResponse:
+        return await ExchangeRateQuery().exchange_rates(base)
 
     # ── Dashboard ──
 
@@ -153,6 +186,10 @@ class Mutation:
     @strawberry.mutation
     def delete_expense(self, info: Info, id: strawberry.ID) -> bool:
         return ExpenseMutation().delete_expense(info, id)
+
+    @strawberry.mutation
+    def mark_expense_paid(self, info: Info, id: strawberry.ID, paid: bool) -> ExpenseType:
+        return ExpenseMutation().mark_expense_paid(info, id, paid)
 
     # ── Portfolios ──
 
@@ -203,6 +240,12 @@ class Mutation:
     @strawberry.mutation
     def delete_income(self, info: Info, id: strawberry.ID) -> bool:
         return IncomeMutation().delete_income(info, id)
+
+    # ── Settings ──
+
+    @strawberry.mutation
+    def update_settings(self, info: Info, input: UpdateSettingsInput) -> UserSettingsType:
+        return SettingsMutation().update_settings(info, input)
 
 
 schema = strawberry.Schema(query=Query, mutation=Mutation)

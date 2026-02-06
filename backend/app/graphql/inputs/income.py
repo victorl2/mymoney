@@ -16,6 +16,10 @@ class CreateIncomeInput:
     is_active: bool = True
     start_date: date | None = None
     notes: str | None = None
+    currency: str | None = None  # If None, use default from settings
+    is_gross: bool = True
+    tax_rate: Decimal | None = None
+    other_fees: Decimal | None = None
 
 
 @strawberry.input
@@ -26,3 +30,7 @@ class UpdateIncomeInput:
     is_active: bool | None = None
     start_date: date | None = None
     notes: str | None = None
+    currency: str | None = None
+    is_gross: bool | None = None
+    tax_rate: Decimal | None = None
+    other_fees: Decimal | None = None

@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { useQuery } from "@apollo/client/react";
 import { Link } from "react-router-dom";
-import { GET_EXPENSES, GET_CATEGORIES } from "../graphql/queries/expenses";
+import { GET_EXPENSES, GET_CATEGORIES, GET_EXPENSE_SUMMARY } from "../graphql/queries/expenses";
+import { useLanguage } from "../context/LanguageContext";
 import ExpenseList from "../components/expenses/ExpenseList";
+import ExpenseSummaryCards from "../components/expenses/ExpenseSummaryCards";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Select from "../components/ui/Select";
-import Input from "../components/ui/Input";
 
 export default function ExpensesPage() {
+  const { t, tCategory, language } = useLanguage();
   const [filter, setFilter] = useState<{
     categoryId?: string;
     search?: string;
@@ -27,8 +29,15 @@ export default function ExpensesPage() {
     },
   });
 
+  const { data: summaryData, loading: summaryLoading, refetch: refetchSummary } = useQuery(GET_EXPENSE_SUMMARY);
+
   const { data: catData } = useQuery(GET_CATEGORIES);
   const categories = catData?.categories ?? [];
+
+  const handleRefetch = () => {
+    refetch();
+    refetchSummary();
+  };
 
   const expenses = data?.expenses?.items ?? [];
   const totalCount = data?.expenses?.totalCount ?? 0;
@@ -39,10 +48,10 @@ export default function ExpensesPage() {
       {/* Header */}
       <div className="flex items-end justify-between mb-8">
         <div>
-          <p className="text-sm text-[var(--text-muted)] uppercase tracking-wider mb-1">Manage</p>
-          <h1 className="font-display text-4xl font-bold text-[var(--text-primary)]">Expenses</h1>
+          <p className="text-sm text-[var(--text-muted)] uppercase tracking-wider mb-1">{t("expenses.subtitle")}</p>
+          <h1 className="font-display text-4xl font-bold text-[var(--text-primary)]">{t("expenses.title")}</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-2">
-            <span className="font-mono text-[var(--accent-primary)]">{totalCount}</span> total expenses tracked
+            <span className="font-mono text-[var(--accent-primary)]">{totalCount}</span> {language === "pt-BR" ? "despesas registradas" : "total expenses tracked"}
           </p>
         </div>
         <Link to="/expenses/new">
@@ -51,11 +60,22 @@ export default function ExpensesPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Add Expense
+              {t("expenses.addExpense")}
             </span>
           </Button>
         </Link>
       </div>
+
+      {/* Summary Cards */}
+      <ExpenseSummaryCards
+        totalAmount={Number(summaryData?.expenseSummary?.totalAmount ?? 0)}
+        paidAmount={Number(summaryData?.expenseSummary?.paidAmount ?? 0)}
+        unpaidAmount={Number(summaryData?.expenseSummary?.unpaidAmount ?? 0)}
+        totalCount={summaryData?.expenseSummary?.totalCount ?? 0}
+        paidCount={summaryData?.expenseSummary?.paidCount ?? 0}
+        unpaidCount={summaryData?.expenseSummary?.unpaidCount ?? 0}
+        loading={summaryLoading}
+      />
 
       {/* Filters */}
       <Card className="mb-6" hover={false}>
@@ -77,7 +97,7 @@ export default function ExpensesPage() {
                   focus:border-[var(--accent-primary)] focus:ring-2 focus:ring-[var(--accent-primary-soft)]
                   focus:outline-none hover:border-[var(--border-medium)]
                 "
-                placeholder="Search expenses..."
+                placeholder={language === "pt-BR" ? "Buscar despesas..." : "Search expenses..."}
                 value={filter.search ?? ""}
                 onChange={(e) => {
                   setFilter((f) => ({ ...f, search: e.target.value }));
@@ -94,10 +114,10 @@ export default function ExpensesPage() {
                 setOffset(0);
               }}
               options={[
-                { value: "", label: "All Categories" },
+                { value: "", label: language === "pt-BR" ? "Todas as Categorias" : "All Categories" },
                 ...categories.map((c: { id: string; name: string }) => ({
                   value: c.id,
-                  label: c.name,
+                  label: tCategory(c.name),
                 })),
               ]}
             />
@@ -122,7 +142,7 @@ export default function ExpensesPage() {
           </div>
         ) : (
           <>
-            <ExpenseList expenses={expenses} onRefetch={() => refetch()} />
+            <ExpenseList expenses={expenses} onRefetch={handleRefetch} />
 
             {/* Pagination */}
             {totalCount > limit && (
@@ -137,7 +157,7 @@ export default function ExpensesPage() {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
-                    Previous
+                    {language === "pt-BR" ? "Anterior" : "Previous"}
                   </span>
                 </Button>
 
@@ -149,7 +169,7 @@ export default function ExpensesPage() {
                   <span className="font-mono text-sm text-[var(--text-secondary)]">
                     {Math.min(offset + limit, totalCount)}
                   </span>
-                  <span className="text-[var(--text-muted)] mx-1">of</span>
+                  <span className="text-[var(--text-muted)] mx-1">{language === "pt-BR" ? "de" : "of"}</span>
                   <span className="font-mono text-sm text-[var(--accent-primary)]">
                     {totalCount}
                   </span>
@@ -162,7 +182,7 @@ export default function ExpensesPage() {
                   onClick={() => setOffset(offset + limit)}
                 >
                   <span className="flex items-center gap-1">
-                    Next
+                    {language === "pt-BR" ? "Próximo" : "Next"}
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>

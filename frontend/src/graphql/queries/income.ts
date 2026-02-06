@@ -11,6 +11,11 @@ export const GET_INCOMES = gql`
         isActive
         startDate
         notes
+        currency
+        isGross
+        taxRate
+        otherFees
+        netAmount
         createdAt
         updatedAt
       }
@@ -30,6 +35,11 @@ export const GET_INCOME = gql`
       isActive
       startDate
       notes
+      currency
+      isGross
+      taxRate
+      otherFees
+      netAmount
       createdAt
       updatedAt
     }

@@ -2,7 +2,7 @@ import strawberry
 from strawberry.types import Info
 
 from app.graphql.types.category import CategoryType
-from app.graphql.types.expense import ExpenseType, ExpenseConnection
+from app.graphql.types.expense import ExpenseType, ExpenseConnection, ExpenseSummaryType
 from app.graphql.inputs.expense import (
     CreateExpenseInput,
     UpdateExpenseInput,
@@ -33,6 +33,8 @@ def _to_expense_type(expense) -> ExpenseType:
         category=_to_category_type(expense.category),
         is_recurring=expense.is_recurring,
         recurrence_rule=expense.recurrence_rule,
+        is_paid=expense.is_paid,
+        paid_at=expense.paid_at,
         created_at=expense.created_at,
         updated_at=expense.updated_at,
     )
@@ -67,6 +69,8 @@ class ExpenseQuery:
                 kwargs["max_amount"] = filter.max_amount
             if filter.is_recurring is not None:
                 kwargs["is_recurring"] = filter.is_recurring
+            if filter.is_paid is not None:
+                kwargs["is_paid"] = filter.is_paid
             if filter.search is not None:
                 kwargs["search"] = filter.search
 
@@ -90,6 +94,22 @@ class ExpenseQuery:
         service = ExpenseService(db)
         expense = service.get_expense(int(id))
         return _to_expense_type(expense) if expense else None
+
+    @strawberry.field
+    def expense_summary(
+        self, info: Info, month: int | None = None, year: int | None = None
+    ) -> ExpenseSummaryType:
+        db = info.context["db"]
+        service = ExpenseService(db)
+        summary = service.get_expense_summary(month=month, year=year)
+        return ExpenseSummaryType(
+            total_amount=summary["total_amount"],
+            paid_amount=summary["paid_amount"],
+            unpaid_amount=summary["unpaid_amount"],
+            total_count=summary["total_count"],
+            paid_count=summary["paid_count"],
+            unpaid_count=summary["unpaid_count"],
+        )
 
 
 @strawberry.type
@@ -142,6 +162,15 @@ class ExpenseMutation:
         db = info.context["db"]
         service = ExpenseService(db)
         return service.delete_expense(int(id))
+
+    @strawberry.mutation
+    def mark_expense_paid(self, info: Info, id: strawberry.ID, paid: bool) -> ExpenseType:
+        db = info.context["db"]
+        service = ExpenseService(db)
+        expense = service.mark_expense_paid(int(id), paid)
+        if not expense:
+            raise ValueError(f"Expense with id {id} not found")
+        return _to_expense_type(expense)
 
 
 @strawberry.type

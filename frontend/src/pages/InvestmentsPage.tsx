@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@apollo/client/react";
 import { Link } from "react-router-dom";
 import { GET_PORTFOLIOS } from "../graphql/queries/investments";
+import { useLanguage } from "../context/LanguageContext";
 import PortfolioSummary from "../components/investments/PortfolioSummary";
 import AssetList from "../components/investments/AssetList";
 import CreatePortfolioForm from "../components/investments/CreatePortfolioForm";
@@ -9,6 +10,7 @@ import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 
 export default function InvestmentsPage() {
+  const { t, language } = useLanguage();
   const { data, loading, refetch } = useQuery(GET_PORTFOLIOS);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
@@ -19,10 +21,10 @@ export default function InvestmentsPage() {
       {/* Header */}
       <div className="flex items-end justify-between mb-8">
         <div>
-          <p className="text-sm text-[var(--text-muted)] uppercase tracking-wider mb-1">Portfolio</p>
-          <h1 className="font-display text-4xl font-bold text-[var(--text-primary)]">Investments</h1>
+          <p className="text-sm text-[var(--text-muted)] uppercase tracking-wider mb-1">{t("investments.subtitle")}</p>
+          <h1 className="font-display text-4xl font-bold text-[var(--text-primary)]">{t("investments.title")}</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-2">
-            <span className="font-mono text-[var(--accent-gain)]">{portfolios.length}</span> active {portfolios.length === 1 ? "portfolio" : "portfolios"}
+            <span className="font-mono text-[var(--accent-gain)]">{portfolios.length}</span> {language === "pt-BR" ? (portfolios.length === 1 ? "portfólio ativo" : "portfólios ativos") : (portfolios.length === 1 ? "active portfolio" : "active portfolios")}
           </p>
         </div>
         <div className="flex gap-3">
@@ -31,7 +33,7 @@ export default function InvestmentsPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              New Portfolio
+              {language === "pt-BR" ? "Novo Portfólio" : "New Portfolio"}
             </span>
           </Button>
           {portfolios.length > 0 && (
@@ -41,7 +43,7 @@ export default function InvestmentsPage() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
-                  Add Asset
+                  {t("investments.addAsset")}
                 </span>
               </Button>
             </Link>
@@ -85,10 +87,10 @@ export default function InvestmentsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
             </div>
-            <p className="text-xl font-medium text-[var(--text-primary)] mb-2">No portfolios yet</p>
-            <p className="text-sm text-[var(--text-muted)] mb-6">Create a portfolio to start tracking your investments</p>
+            <p className="text-xl font-medium text-[var(--text-primary)] mb-2">{t("investments.noPortfolios")}</p>
+            <p className="text-sm text-[var(--text-muted)] mb-6">{t("investments.createFirst")}</p>
             <Button onClick={() => setShowCreateForm(true)}>
-              Create Your First Portfolio
+              {language === "pt-BR" ? "Criar Seu Primeiro Portfólio" : "Create Your First Portfolio"}
             </Button>
           </div>
         </Card>
@@ -133,7 +135,7 @@ export default function InvestmentsPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                       </svg>
                     </div>
-                    <h3 className="font-medium text-[var(--text-primary)]">Assets</h3>
+                    <h3 className="font-medium text-[var(--text-primary)]">{language === "pt-BR" ? "Ativos" : "Assets"}</h3>
                   </div>
                   <Link to={`/investments/new?portfolioId=${portfolio.id}`}>
                     <Button size="sm" variant="secondary">
@@ -141,7 +143,7 @@ export default function InvestmentsPage() {
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
-                        Add
+                        {language === "pt-BR" ? "Adicionar" : "Add"}
                       </span>
                     </Button>
                   </Link>

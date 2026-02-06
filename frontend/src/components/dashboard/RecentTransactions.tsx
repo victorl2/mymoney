@@ -1,6 +1,9 @@
 import { format } from "date-fns";
+import { ptBR, enUS } from "date-fns/locale";
 import { Link } from "react-router-dom";
 import Card from "../ui/Card";
+import { useCurrency } from "../../context/CurrencyContext";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface RecentExpense {
   id: string;
@@ -15,6 +18,10 @@ interface RecentTransactionsProps {
 }
 
 export default function RecentTransactions({ expenses }: RecentTransactionsProps) {
+  const { currencySymbol } = useCurrency();
+  const { t, tCategory, language } = useLanguage();
+  const dateLocale = language === "pt-BR" ? ptBR : enUS;
+
   return (
     <Card>
       <div className="flex items-center justify-between mb-6">
@@ -25,14 +32,14 @@ export default function RecentTransactions({ expenses }: RecentTransactionsProps
             </svg>
           </div>
           <p className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wider">
-            Recent Expenses
+            {t("dashboard.recentTransactions")}
           </p>
         </div>
         <Link
           to="/expenses"
           className="text-xs font-medium text-[var(--accent-primary)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-1"
         >
-          View all
+          {language === "pt-BR" ? "Ver tudo" : "View all"}
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
@@ -41,7 +48,7 @@ export default function RecentTransactions({ expenses }: RecentTransactionsProps
 
       {expenses.length === 0 ? (
         <div className="flex items-center justify-center py-8">
-          <p className="text-[var(--text-muted)]">No expenses yet</p>
+          <p className="text-[var(--text-muted)]">{t("dashboard.noTransactions")}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -69,18 +76,18 @@ export default function RecentTransactions({ expenses }: RecentTransactionsProps
                   </p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-xs text-[var(--text-muted)]">
-                      {expense.category.name}
+                      {tCategory(expense.category.name)}
                     </span>
                     <span className="w-1 h-1 rounded-full bg-[var(--border-medium)]" />
                     <span className="text-xs text-[var(--text-muted)]">
-                      {format(new Date(expense.date), "MMM d")}
+                      {format(new Date(expense.date), language === "pt-BR" ? "dd/MM" : "MMM d", { locale: dateLocale })}
                     </span>
                   </div>
                 </div>
               </div>
 
               <span className="font-mono text-sm font-semibold text-[var(--text-primary)] shrink-0 ml-4">
-                -${Number(expense.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                -{currencySymbol}{Number(expense.amount).toLocaleString(language === "pt-BR" ? "pt-BR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
           ))}

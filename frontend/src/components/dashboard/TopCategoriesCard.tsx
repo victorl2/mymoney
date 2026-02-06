@@ -1,4 +1,6 @@
 import Card from "../ui/Card";
+import { useCurrency } from "../../context/CurrencyContext";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface CategorySummary {
   category: { name: string; color: string };
@@ -12,6 +14,9 @@ interface TopCategoriesCardProps {
 }
 
 export default function TopCategoriesCard({ categories }: TopCategoriesCardProps) {
+  const { currencySymbol } = useCurrency();
+  const { t, tCategory, language } = useLanguage();
+
   return (
     <Card>
       <div className="flex items-center justify-between mb-6">
@@ -22,15 +27,15 @@ export default function TopCategoriesCard({ categories }: TopCategoriesCardProps
             </svg>
           </div>
           <p className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wider">
-            Top Categories
+            {t("dashboard.topCategories")}
           </p>
         </div>
-        <span className="text-xs text-[var(--text-muted)]">This month</span>
+        <span className="text-xs text-[var(--text-muted)]">{t("dashboard.thisMonth")}</span>
       </div>
 
       {categories.length === 0 ? (
         <div className="flex items-center justify-center py-8">
-          <p className="text-[var(--text-muted)]">No data this month</p>
+          <p className="text-[var(--text-muted)]">{language === "pt-BR" ? "Sem dados este mês" : "No data this month"}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -50,12 +55,12 @@ export default function TopCategoriesCard({ categories }: TopCategoriesCardProps
                       style={{ backgroundColor: item.category.color }}
                     />
                     <span className="text-sm font-medium text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] transition-colors">
-                      {item.category.name}
+                      {tCategory(item.category.name)}
                     </span>
                   </div>
                   <div className="text-right">
                     <span className="font-mono text-sm font-semibold text-[var(--text-primary)]">
-                      ${totalAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {currencySymbol}{totalAmount.toLocaleString(language === "pt-BR" ? "pt-BR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
                 </div>
@@ -74,7 +79,7 @@ export default function TopCategoriesCard({ categories }: TopCategoriesCardProps
 
                 <div className="flex items-center justify-between mt-1.5">
                   <span className="text-xs text-[var(--text-muted)]">
-                    {item.transactionCount} transaction{item.transactionCount !== 1 ? "s" : ""}
+                    {item.transactionCount} {language === "pt-BR" ? (item.transactionCount !== 1 ? "transações" : "transação") : (item.transactionCount !== 1 ? "transactions" : "transaction")}
                   </span>
                   <span className="font-mono text-xs text-[var(--text-muted)]">
                     {percentage.toFixed(1)}%

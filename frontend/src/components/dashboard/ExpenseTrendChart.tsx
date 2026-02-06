@@ -1,5 +1,7 @@
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import Card from "../ui/Card";
+import { useCurrency } from "../../context/CurrencyContext";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface MonthlyExpense {
   month: string;
@@ -10,8 +12,9 @@ interface ExpenseTrendChartProps {
   data: MonthlyExpense[];
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label, currencySymbol, language }: any) => {
   if (active && payload && payload.length) {
+    const locale = language === "pt-BR" ? "pt-BR" : "en-US";
     return (
       <div
         className="px-4 py-3 rounded-xl border border-[var(--border-medium)]"
@@ -21,10 +24,10 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         }}
       >
         <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">
-          Month {label}
+          {language === "pt-BR" ? "Mês" : "Month"} {label}
         </p>
         <p className="font-mono text-lg font-semibold" style={{ color: "var(--accent-primary)" }}>
-          ${payload[0].value.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+          {currencySymbol}{payload[0].value.toLocaleString(locale, { minimumFractionDigits: 2 })}
         </p>
       </div>
     );
@@ -33,6 +36,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function ExpenseTrendChart({ data }: ExpenseTrendChartProps) {
+  const { currencySymbol } = useCurrency();
+  const { t, language } = useLanguage();
+
   const chartData = data.map((d) => ({
     month: d.month.slice(5),
     amount: Number(d.totalAmount),
@@ -48,15 +54,15 @@ export default function ExpenseTrendChart({ data }: ExpenseTrendChartProps) {
             </svg>
           </div>
           <p className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wider">
-            Expense Trend
+            {t("dashboard.expenseTrend")}
           </p>
         </div>
-        <span className="text-xs text-[var(--text-muted)]">Last 12 months</span>
+        <span className="text-xs text-[var(--text-muted)]">{language === "pt-BR" ? "Últimos 12 meses" : "Last 12 months"}</span>
       </div>
 
       {chartData.length === 0 ? (
         <div className="flex items-center justify-center h-[200px]">
-          <p className="text-[var(--text-muted)]">No data yet</p>
+          <p className="text-[var(--text-muted)]">{language === "pt-BR" ? "Sem dados" : "No data yet"}</p>
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={200}>
@@ -83,10 +89,10 @@ export default function ExpenseTrendChart({ data }: ExpenseTrendChartProps) {
               axisLine={false}
               tickLine={false}
               tick={{ fill: "var(--text-muted)", fontSize: 11, fontFamily: "JetBrains Mono" }}
-              tickFormatter={(v) => `$${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
+              tickFormatter={(v) => `${currencySymbol}${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
               dx={-10}
             />
-            <Tooltip content={<CustomTooltip />} cursor={false} />
+            <Tooltip content={<CustomTooltip currencySymbol={currencySymbol} language={language} />} cursor={false} />
             <Area
               type="monotone"
               dataKey="amount"

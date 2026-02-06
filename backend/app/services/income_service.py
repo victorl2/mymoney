@@ -63,13 +63,9 @@ class IncomeService:
         return True
 
     def get_total_monthly_income(self) -> Decimal:
-        """Sum of all active income streams."""
-        result = (
-            self.db.query(func.sum(Income.amount))
-            .filter(Income.is_active == True)
-            .scalar()
-        )
-        return result or Decimal("0")
+        """Sum of all active income streams (net amounts after taxes/fees)."""
+        active_incomes = self.db.query(Income).filter(Income.is_active == True).all()
+        return sum((income.net_amount for income in active_incomes), Decimal("0"))
 
     def get_active_income_count(self) -> int:
         """Count of active income streams."""

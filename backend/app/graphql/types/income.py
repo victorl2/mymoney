@@ -26,6 +26,11 @@ class IncomeType:
     is_active: bool
     start_date: date | None
     notes: str | None
+    currency: str
+    is_gross: bool
+    tax_rate: Decimal | None
+    other_fees: Decimal | None
+    net_amount: Decimal
     created_at: datetime
     updated_at: datetime
 

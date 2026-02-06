@@ -4,6 +4,7 @@ from strawberry.types import Info
 from app.graphql.types.income import IncomeType, IncomeConnection
 from app.graphql.inputs.income import CreateIncomeInput, UpdateIncomeInput
 from app.services.income_service import IncomeService
+from app.services.settings_service import SettingsService
 
 
 def _to_income_type(income) -> IncomeType:
@@ -15,6 +16,11 @@ def _to_income_type(income) -> IncomeType:
         is_active=income.is_active,
         start_date=income.start_date,
         notes=income.notes,
+        currency=income.currency,
+        is_gross=income.is_gross,
+        tax_rate=income.tax_rate,
+        other_fees=income.other_fees,
+        net_amount=income.net_amount,
         created_at=income.created_at,
         updated_at=income.updated_at,
     )
@@ -59,6 +65,13 @@ class IncomeMutation:
     def create_income(self, info: Info, input: CreateIncomeInput) -> IncomeType:
         db = info.context["db"]
         service = IncomeService(db)
+
+        # Get default currency from settings if not provided
+        currency = input.currency
+        if currency is None:
+            settings_service = SettingsService(db)
+            currency = settings_service.get_default_currency()
+
         income = service.create_income(
             name=input.name,
             amount=input.amount,
@@ -66,6 +79,10 @@ class IncomeMutation:
             is_active=input.is_active,
             start_date=input.start_date,
             notes=input.notes,
+            currency=currency,
+            is_gross=input.is_gross,
+            tax_rate=input.tax_rate,
+            other_fees=input.other_fees,
         )
         return _to_income_type(income)
 
@@ -89,6 +106,14 @@ class IncomeMutation:
             kwargs["start_date"] = input.start_date
         if input.notes is not None:
             kwargs["notes"] = input.notes
+        if input.currency is not None:
+            kwargs["currency"] = input.currency
+        if input.is_gross is not None:
+            kwargs["is_gross"] = input.is_gross
+        if input.tax_rate is not None:
+            kwargs["tax_rate"] = input.tax_rate
+        if input.other_fees is not None:
+            kwargs["other_fees"] = input.other_fees
 
         income = service.update_income(int(id), **kwargs)
         if not income:
