@@ -1,4 +1,6 @@
 import Card from "../ui/Card";
+import { useCurrency } from "../../context/CurrencyContext";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface ExpenseSummaryCardProps {
   totalThisMonth: number | string;
@@ -11,6 +13,8 @@ export default function ExpenseSummaryCard({
   totalLastMonth,
   changePercent,
 }: ExpenseSummaryCardProps) {
+  const { currencySymbol } = useCurrency();
+  const { language } = useLanguage();
   const thisMonthNum = Number(totalThisMonth);
   const lastMonthNum = Number(totalLastMonth);
   const changeNum = changePercent !== null ? Number(changePercent) : null;
@@ -35,13 +39,13 @@ export default function ExpenseSummaryCard({
             </svg>
           </div>
           <p className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wider">
-            Monthly Expenses
+            {language === "pt-BR" ? "Despesas Mensais" : "Monthly Expenses"}
           </p>
         </div>
 
         <div className="flex items-end gap-3 mb-6">
           <p className="font-display text-4xl font-bold text-[var(--text-primary)] number-reveal">
-            ${thisMonthNum.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {currencySymbol}{thisMonthNum.toLocaleString(language === "pt-BR" ? "pt-BR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
           {changeNum !== null && (
             <span
@@ -67,9 +71,9 @@ export default function ExpenseSummaryCard({
 
         <div className="pt-4 border-t border-[var(--border-subtle)]">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider">vs Last Month</p>
+            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider">{language === "pt-BR" ? "vs Mês Anterior" : "vs Last Month"}</p>
             <p className="font-mono text-sm text-[var(--text-secondary)]">
-              ${lastMonthNum.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {currencySymbol}{lastMonthNum.toLocaleString(language === "pt-BR" ? "pt-BR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
           {/* Progress bar comparing months */}

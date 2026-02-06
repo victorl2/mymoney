@@ -29,6 +29,7 @@ class UpdateExpenseInput:
     category_id: strawberry.ID | None = None
     is_recurring: bool | None = None
     recurrence_rule: RecurrenceRule | None = None
+    is_paid: bool | None = None
 
 
 @strawberry.input
@@ -39,6 +40,7 @@ class ExpenseFilter:
     min_amount: Decimal | None = None
     max_amount: Decimal | None = None
     is_recurring: bool | None = None
+    is_paid: bool | None = None
     search: str | None = None
 
 

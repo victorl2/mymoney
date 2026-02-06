@@ -1,20 +1,22 @@
 import { useMutation } from "@apollo/client/react";
 import Button from "../ui/Button";
 import { DELETE_ASSET } from "../../graphql/mutations/investments";
+import { useCurrency } from "../../context/CurrencyContext";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface Asset {
   id: string;
   symbol: string;
   name: string;
   assetType: string;
-  quantity: number;
-  purchasePrice: number;
+  quantity: number | string;
+  purchasePrice: number | string;
   purchaseDate: string;
-  currentPrice: number | null;
-  totalCost: number;
-  currentValue: number | null;
-  gainLoss: number | null;
-  gainLossPercent: number | null;
+  currentPrice: number | string | null;
+  totalCost: number | string;
+  currentValue: number | string | null;
+  gainLoss: number | string | null;
+  gainLossPercent: number | string | null;
 }
 
 interface AssetListProps {
@@ -22,29 +24,28 @@ interface AssetListProps {
   onRefetch: () => void;
 }
 
-const assetTypeLabels: Record<string, string> = {
-  STOCK: "Stock",
-  CRYPTO: "Crypto",
-  FUND: "Fund",
-  ETF: "ETF",
-  BOND: "Bond",
-  OTHER: "Other",
-};
-
-const assetTypeColors: Record<string, string> = {
+const ASSET_TYPE_COLORS: Record<string, string> = {
   STOCK: "#a78bfa",
   CRYPTO: "#facc15",
   FUND: "#38bdf8",
   ETF: "#00ff88",
   BOND: "#f472b6",
+  FII: "#14b8a6",
   OTHER: "#fb923c",
 };
 
 export default function AssetList({ assets, onRefetch }: AssetListProps) {
+  const { currencySymbol } = useCurrency();
+  const { t, language } = useLanguage();
   const [deleteAsset] = useMutation(DELETE_ASSET);
 
+  const getTypeLabel = (type: string) => {
+    const key = `assetType.${type.toLowerCase()}`;
+    return t(key);
+  };
+
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this asset?")) return;
+    if (!confirm(language === "pt-BR" ? "Excluir este ativo?" : "Delete this asset?")) return;
     await deleteAsset({ variables: { id } });
     onRefetch();
   };
@@ -57,7 +58,7 @@ export default function AssetList({ assets, onRefetch }: AssetListProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
         </div>
-        <p className="text-sm text-[var(--text-muted)]">No assets in this portfolio yet</p>
+        <p className="text-sm text-[var(--text-muted)]">{t("investments.noAssets")}</p>
       </div>
     );
   }
@@ -67,21 +68,25 @@ export default function AssetList({ assets, onRefetch }: AssetListProps) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-[var(--border-subtle)]">
-            <th className="pb-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Asset</th>
-            <th className="pb-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Type</th>
-            <th className="pb-4 text-right text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Qty</th>
-            <th className="pb-4 text-right text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Avg Cost</th>
-            <th className="pb-4 text-right text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Current</th>
-            <th className="pb-4 text-right text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Value</th>
-            <th className="pb-4 text-right text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Gain/Loss</th>
+            <th className="pb-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">{language === "pt-BR" ? "Ativo" : "Asset"}</th>
+            <th className="pb-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">{t("investments.type")}</th>
+            <th className="pb-4 text-right text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">{language === "pt-BR" ? "Qtd" : "Qty"}</th>
+            <th className="pb-4 text-right text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">{language === "pt-BR" ? "Preço Médio" : "Avg Cost"}</th>
+            <th className="pb-4 text-right text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">{language === "pt-BR" ? "Atual" : "Current"}</th>
+            <th className="pb-4 text-right text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">{language === "pt-BR" ? "Valor" : "Value"}</th>
+            <th className="pb-4 text-right text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">{t("investments.gainLoss")}</th>
             <th className="pb-4 w-10"></th>
           </tr>
         </thead>
         <tbody>
           {assets.map((asset, index) => {
-            const gl = asset.gainLoss;
+            const gl = asset.gainLoss !== null ? Number(asset.gainLoss) : null;
             const isPositive = gl !== null && gl >= 0;
-            const color = assetTypeColors[asset.assetType] || assetTypeColors.OTHER;
+            const color = ASSET_TYPE_COLORS[asset.assetType] || ASSET_TYPE_COLORS.OTHER;
+            const quantity = Number(asset.quantity);
+            const purchasePrice = Number(asset.purchasePrice);
+            const currentPrice = asset.currentPrice !== null ? Number(asset.currentPrice) : null;
+            const currentValue = asset.currentValue !== null ? Number(asset.currentValue) : null;
 
             return (
               <tr
@@ -110,21 +115,21 @@ export default function AssetList({ assets, onRefetch }: AssetListProps) {
                     className="px-2 py-1 rounded-md text-xs font-medium"
                     style={{ background: `${color}20`, color }}
                   >
-                    {assetTypeLabels[asset.assetType] ?? asset.assetType}
+                    {getTypeLabel(asset.assetType)}
                   </span>
                 </td>
                 <td className="py-4 text-right font-mono text-[var(--text-secondary)]">
-                  {asset.quantity.toLocaleString()}
+                  {quantity.toLocaleString(language === "pt-BR" ? "pt-BR" : "en-US")}
                 </td>
                 <td className="py-4 text-right font-mono text-[var(--text-secondary)]">
-                  ${asset.purchasePrice.toFixed(2)}
+                  {currencySymbol}{purchasePrice.toLocaleString(language === "pt-BR" ? "pt-BR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
                 <td className="py-4 text-right font-mono text-[var(--text-primary)]">
-                  {asset.currentPrice !== null ? `$${asset.currentPrice.toFixed(2)}` : "—"}
+                  {currentPrice !== null ? `${currencySymbol}${currentPrice.toLocaleString(language === "pt-BR" ? "pt-BR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
                 </td>
                 <td className="py-4 text-right font-mono font-semibold text-[var(--text-primary)]">
-                  {asset.currentValue !== null
-                    ? `$${asset.currentValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                  {currentValue !== null
+                    ? `${currencySymbol}${currentValue.toLocaleString(language === "pt-BR" ? "pt-BR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                     : "—"}
                 </td>
                 <td className="py-4 text-right">
@@ -134,14 +139,14 @@ export default function AssetList({ assets, onRefetch }: AssetListProps) {
                         className="font-mono font-semibold"
                         style={{ color: isPositive ? "var(--accent-gain)" : "var(--accent-loss)" }}
                       >
-                        {isPositive ? "+" : ""}${gl.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {isPositive ? "+" : "-"}{currencySymbol}{Math.abs(gl).toLocaleString(language === "pt-BR" ? "pt-BR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                       {asset.gainLossPercent !== null && (
                         <span
                           className="text-xs"
                           style={{ color: isPositive ? "var(--accent-gain)" : "var(--accent-loss)" }}
                         >
-                          {isPositive ? "+" : ""}{asset.gainLossPercent.toFixed(1)}%
+                          {isPositive ? "+" : ""}{Number(asset.gainLossPercent).toFixed(1)}%
                         </span>
                       )}
                     </div>

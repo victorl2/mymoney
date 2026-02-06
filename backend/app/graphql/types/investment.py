@@ -14,6 +14,7 @@ class AssetType(enum.Enum):
     FUND = "fund"
     ETF = "etf"
     BOND = "bond"
+    FII = "fii"
     OTHER = "other"
 
 

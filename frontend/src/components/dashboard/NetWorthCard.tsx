@@ -1,19 +1,28 @@
 import Card from "../ui/Card";
+import { useCurrency } from "../../context/CurrencyContext";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface NetWorthCardProps {
   netWorth: number | string;
   totalPortfolioValue: number | string;
   totalPortfolioCost: number | string;
+  totalMonthlyIncome?: number | string;
+  incomeStreamsCount?: number;
 }
 
 export default function NetWorthCard({
   netWorth,
   totalPortfolioValue,
   totalPortfolioCost,
+  totalMonthlyIncome = 0,
+  incomeStreamsCount = 0,
 }: NetWorthCardProps) {
+  const { currencySymbol } = useCurrency();
+  const { t, language } = useLanguage();
   const netWorthNum = Number(netWorth);
   const portfolioValueNum = Number(totalPortfolioValue);
   const portfolioCostNum = Number(totalPortfolioCost);
+  const monthlyIncomeNum = Number(totalMonthlyIncome);
   const gainLoss = portfolioValueNum - portfolioCostNum;
   const isPositive = gainLoss >= 0;
   const gainLossPercent = portfolioCostNum > 0 ? ((gainLoss / portfolioCostNum) * 100) : 0;
@@ -41,40 +50,42 @@ export default function NetWorthCard({
             </svg>
           </div>
           <p className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wider">
-            Net Worth
+            {t("dashboard.netWorth")}
           </p>
         </div>
 
         <p className="font-display text-4xl font-bold text-[var(--text-primary)] mb-6 number-reveal">
-          ${netWorthNum.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          {currencySymbol}{netWorthNum.toLocaleString(language === "pt-BR" ? "pt-BR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </p>
 
-        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[var(--border-subtle)]">
-          <div>
-            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Portfolio Value</p>
+        <div className="flex items-start justify-between gap-6 pt-4 border-t border-[var(--border-subtle)]">
+          <div className="min-w-0">
+            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">{t("dashboard.portfolio")}</p>
             <p className="font-mono text-lg font-semibold text-[var(--text-primary)]">
-              ${portfolioValueNum.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {currencySymbol}{portfolioValueNum.toLocaleString(language === "pt-BR" ? "pt-BR" : "en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </p>
           </div>
-          <div>
-            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Total P&L</p>
-            <div className="flex items-center gap-2">
-              <p
-                className="font-mono text-lg font-semibold"
-                style={{ color: isPositive ? "var(--accent-gain)" : "var(--accent-loss)" }}
-              >
-                {isPositive ? "+" : ""}${gainLoss.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <div className="min-w-0">
+            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1 whitespace-nowrap">{t("dashboard.income")}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="font-mono text-lg font-semibold text-[var(--chart-2)]">
+                +{currencySymbol}{monthlyIncomeNum.toLocaleString(language === "pt-BR" ? "pt-BR" : "en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </p>
-              <span
-                className="px-2 py-0.5 rounded-md text-xs font-medium"
-                style={{
-                  background: isPositive ? "var(--accent-gain-soft)" : "var(--accent-loss-soft)",
-                  color: isPositive ? "var(--accent-gain)" : "var(--accent-loss)",
-                }}
-              >
-                {isPositive ? "+" : ""}{gainLossPercent.toFixed(1)}%
-              </span>
+              {incomeStreamsCount > 0 && (
+                <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[var(--chart-2)]/20 text-[var(--chart-2)]">
+                  {incomeStreamsCount}
+                </span>
+              )}
             </div>
+          </div>
+          <div className="min-w-0 text-right">
+            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">{t("dashboard.pnl")}</p>
+            <p
+              className="font-mono text-lg font-semibold"
+              style={{ color: isPositive ? "var(--accent-gain)" : "var(--accent-loss)" }}
+            >
+              {isPositive ? "+" : ""}{gainLossPercent.toFixed(1)}%
+            </p>
           </div>
         </div>
       </div>

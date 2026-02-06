@@ -1,5 +1,7 @@
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import Card from "../ui/Card";
+import { useCurrency } from "../../context/CurrencyContext";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface AllocationSlice {
   assetType: string;
@@ -11,20 +13,32 @@ interface PortfolioAllocationChartProps {
   data: AllocationSlice[];
 }
 
-const COLORS = ["#a78bfa", "#00ff88", "#38bdf8", "#fb923c", "#f472b6", "#facc15"];
+const COLORS = ["#a78bfa", "#00ff88", "#38bdf8", "#fb923c", "#f472b6", "#facc15", "#14b8a6"];
 
-const typeLabels: Record<string, string> = {
+const typeLabelsEn: Record<string, string> = {
   STOCK: "Stocks",
   CRYPTO: "Crypto",
   FUND: "Funds",
   ETF: "ETFs",
   BOND: "Bonds",
+  FII: "FIIs",
   OTHER: "Other",
 };
 
-const CustomTooltip = ({ active, payload }: any) => {
+const typeLabelsPt: Record<string, string> = {
+  STOCK: "Ações",
+  CRYPTO: "Cripto",
+  FUND: "Fundos",
+  ETF: "ETFs",
+  BOND: "Títulos",
+  FII: "FIIs",
+  OTHER: "Outros",
+};
+
+const CustomTooltip = ({ active, payload, currencySymbol, language }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
+    const locale = language === "pt-BR" ? "pt-BR" : "en-US";
     return (
       <div
         className="px-4 py-3 rounded-xl border border-[var(--border-medium)]"
@@ -41,9 +55,9 @@ const CustomTooltip = ({ active, payload }: any) => {
           <p className="text-sm font-medium text-[var(--text-primary)]">{data.name}</p>
         </div>
         <p className="font-mono text-lg font-semibold text-[var(--text-primary)]">
-          ${data.value.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+          {currencySymbol}{data.value.toLocaleString(locale, { minimumFractionDigits: 2 })}
         </p>
-        <p className="text-xs text-[var(--text-muted)]">{data.percentage.toFixed(1)}% of portfolio</p>
+        <p className="text-xs text-[var(--text-muted)]">{data.percentage.toFixed(1)}% {language === "pt-BR" ? "do portfólio" : "of portfolio"}</p>
       </div>
     );
   }
@@ -51,6 +65,10 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 export default function PortfolioAllocationChart({ data }: PortfolioAllocationChartProps) {
+  const { currencySymbol } = useCurrency();
+  const { t, language } = useLanguage();
+  const typeLabels = language === "pt-BR" ? typeLabelsPt : typeLabelsEn;
+
   const chartData = data.map((d, i) => ({
     name: typeLabels[d.assetType] ?? d.assetType,
     value: Number(d.totalValue),
@@ -71,14 +89,14 @@ export default function PortfolioAllocationChart({ data }: PortfolioAllocationCh
             </svg>
           </div>
           <p className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wider">
-            Portfolio Allocation
+            {t("dashboard.portfolioAllocation")}
           </p>
         </div>
       </div>
 
       {chartData.length === 0 ? (
         <div className="flex items-center justify-center h-[200px]">
-          <p className="text-[var(--text-muted)]">No investments yet</p>
+          <p className="text-[var(--text-muted)]">{language === "pt-BR" ? "Nenhum investimento ainda" : "No investments yet"}</p>
         </div>
       ) : (
         <div className="flex items-center gap-6">
@@ -100,14 +118,14 @@ export default function PortfolioAllocationChart({ data }: PortfolioAllocationCh
                     <Cell key={index} fill={entry.fill} />
                   ))}
                 </Pie>
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<CustomTooltip currencySymbol={currencySymbol} language={language} />} />
               </PieChart>
             </ResponsiveContainer>
             {/* Center label */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <p className="text-xs text-[var(--text-muted)] uppercase">Total</p>
               <p className="font-mono text-sm font-bold text-[var(--text-primary)]">
-                ${totalValue >= 1000 ? `${(totalValue / 1000).toFixed(1)}k` : totalValue.toFixed(0)}
+                {currencySymbol}{totalValue >= 1000 ? `${(totalValue / 1000).toLocaleString(language === "pt-BR" ? "pt-BR" : "en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k` : totalValue.toLocaleString(language === "pt-BR" ? "pt-BR" : "en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </p>
             </div>
           </div>

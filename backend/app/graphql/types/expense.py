@@ -29,6 +29,8 @@ class ExpenseType:
     category: CategoryType
     is_recurring: bool
     recurrence_rule: str | None
+    is_paid: bool
+    paid_at: datetime | None
     created_at: datetime
     updated_at: datetime
 
@@ -38,3 +40,13 @@ class ExpenseConnection:
     items: list[ExpenseType]
     total_count: int
     has_more: bool
+
+
+@strawberry.type
+class ExpenseSummaryType:
+    total_amount: Decimal
+    paid_amount: Decimal
+    unpaid_amount: Decimal
+    total_count: int
+    paid_count: int
+    unpaid_count: int

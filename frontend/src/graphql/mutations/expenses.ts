@@ -43,3 +43,13 @@ export const DELETE_EXPENSE = gql`
     deleteExpense(id: $id)
   }
 `;
+
+export const MARK_EXPENSE_PAID = gql`
+  mutation MarkExpensePaid($id: ID!, $paid: Boolean!) {
+    markExpensePaid(id: $id, paid: $paid) {
+      id
+      isPaid
+      paidAt
+    }
+  }
+`;

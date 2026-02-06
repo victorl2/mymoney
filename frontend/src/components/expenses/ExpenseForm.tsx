@@ -1,17 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { useNavigate } from "react-router-dom";
-import { GET_CATEGORIES } from "../../graphql/queries/expenses";
-import { CREATE_EXPENSE } from "../../graphql/mutations/expenses";
+import { GET_CATEGORIES, GET_EXPENSES, GET_EXPENSE_SUMMARY } from "../../graphql/queries/expenses";
+import { CREATE_EXPENSE, UPDATE_EXPENSE } from "../../graphql/mutations/expenses";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import Select from "../ui/Select";
 import Card from "../ui/Card";
+import { useCurrency } from "../../context/CurrencyContext";
+import { useLanguage } from "../../context/LanguageContext";
 
-export default function ExpenseForm() {
+interface Expense {
+  id: string;
+  amount: number | string;
+  description: string;
+  notes: string | null;
+  date: string;
+  category: { id: string; name: string; color: string };
+  isRecurring: boolean;
+  recurrenceRule: string | null;
+}
+
+interface ExpenseFormProps {
+  expense?: Expense;
+}
+
+export default function ExpenseForm({ expense }: ExpenseFormProps) {
+  const { currencySymbol } = useCurrency();
+  const { t, tCategory } = useLanguage();
   const navigate = useNavigate();
   const { data: catData } = useQuery(GET_CATEGORIES);
-  const [createExpense, { loading }] = useMutation(CREATE_EXPENSE);
+  const [createExpense, { loading: creating }] = useMutation(CREATE_EXPENSE);
+  const [updateExpense, { loading: updating }] = useMutation(UPDATE_EXPENSE);
+
+  const isEditMode = !!expense;
+  const loading = creating || updating;
 
   const [form, setForm] = useState({
     amount: "",
@@ -23,25 +46,48 @@ export default function ExpenseForm() {
     recurrenceRule: "",
   });
 
+  // Populate form when editing
+  useEffect(() => {
+    if (expense) {
+      setForm({
+        amount: String(expense.amount),
+        description: expense.description,
+        notes: expense.notes || "",
+        date: expense.date,
+        categoryId: expense.category.id,
+        isRecurring: expense.isRecurring,
+        recurrenceRule: expense.recurrenceRule?.toUpperCase() || "",
+      });
+    }
+  }, [expense]);
+
   const categories = catData?.categories ?? [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.amount || !form.description || !form.categoryId) return;
 
-    await createExpense({
-      variables: {
-        input: {
-          amount: parseFloat(form.amount),
-          description: form.description,
-          notes: form.notes || null,
-          date: form.date,
-          categoryId: form.categoryId,
-          isRecurring: form.isRecurring,
-          recurrenceRule: form.isRecurring && form.recurrenceRule ? form.recurrenceRule : null,
-        },
-      },
-    });
+    const input = {
+      amount: parseFloat(form.amount),
+      description: form.description,
+      notes: form.notes || null,
+      date: form.date,
+      categoryId: form.categoryId,
+      isRecurring: form.isRecurring,
+      recurrenceRule: form.isRecurring && form.recurrenceRule ? form.recurrenceRule.toUpperCase() : null,
+    };
+
+    if (isEditMode) {
+      await updateExpense({
+        variables: { id: expense.id, input },
+        refetchQueries: ["GetExpenses", "GetExpenseSummary"],
+      });
+    } else {
+      await createExpense({
+        variables: { input },
+        refetchQueries: ["GetExpenses", "GetExpenseSummary"],
+      });
+    }
     navigate("/expenses");
   };
 
@@ -59,10 +105,14 @@ export default function ExpenseForm() {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Back to Expenses
+          {t("common.back")} {t("nav.expenses")}
         </button>
-        <h1 className="font-display text-3xl font-bold text-[var(--text-primary)]">New Expense</h1>
-        <p className="text-sm text-[var(--text-secondary)] mt-1">Track a new expense</p>
+        <h1 className="font-display text-3xl font-bold text-[var(--text-primary)]">
+          {isEditMode ? t("expenses.editExpense") : t("expenses.newExpense")}
+        </h1>
+        <p className="text-sm text-[var(--text-secondary)] mt-1">
+          {t("expenses.subtitle")}
+        </p>
       </div>
 
       <Card hover={false}>
@@ -70,11 +120,11 @@ export default function ExpenseForm() {
           {/* Amount - prominent */}
           <div>
             <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
-              Amount
+              {t("expenses.amount")}
             </label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-[var(--text-muted)]">
-                $
+                {currencySymbol}
               </span>
               <input
                 type="number"
@@ -98,8 +148,8 @@ export default function ExpenseForm() {
           </div>
 
           <Input
-            label="Description"
-            placeholder="What was this expense for?"
+            label={t("expenses.description")}
+            placeholder=""
             value={form.description}
             onChange={(e) => update("description", e.target.value)}
             required
@@ -107,21 +157,21 @@ export default function ExpenseForm() {
 
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Date"
+              label={t("expenses.date")}
               type="date"
               value={form.date}
               onChange={(e) => update("date", e.target.value)}
               required
             />
             <Select
-              label="Category"
+              label={t("expenses.category")}
               value={form.categoryId}
               onChange={(e) => update("categoryId", e.target.value)}
               options={[
-                { value: "", label: "Select a category" },
+                { value: "", label: t("expenses.selectCategory") },
                 ...categories.map((c: { id: string; name: string }) => ({
                   value: c.id,
-                  label: c.name,
+                  label: tCategory(c.name),
                 })),
               ]}
               required
@@ -129,8 +179,8 @@ export default function ExpenseForm() {
           </div>
 
           <Input
-            label="Notes (optional)"
-            placeholder="Additional notes..."
+            label={t("expenses.notesOptional")}
+            placeholder=""
             value={form.notes}
             onChange={(e) => update("notes", e.target.value)}
           />
@@ -138,7 +188,14 @@ export default function ExpenseForm() {
           {/* Recurring toggle */}
           <div
             className="flex items-center justify-between p-4 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] cursor-pointer transition-colors hover:border-[var(--border-medium)]"
-            onClick={() => update("isRecurring", !form.isRecurring)}
+            onClick={() => {
+              const newIsRecurring = !form.isRecurring;
+              setForm((prev) => ({
+                ...prev,
+                isRecurring: newIsRecurring,
+                recurrenceRule: newIsRecurring && !prev.recurrenceRule ? "MONTHLY" : prev.recurrenceRule,
+              }));
+            }}
           >
             <div className="flex items-center gap-3">
               <div
@@ -156,8 +213,8 @@ export default function ExpenseForm() {
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-medium text-[var(--text-primary)]">Recurring Expense</p>
-                <p className="text-xs text-[var(--text-muted)]">This expense repeats on a schedule</p>
+                <p className="text-sm font-medium text-[var(--text-primary)]">{t("expenses.recurring")}</p>
+                <p className="text-xs text-[var(--text-muted)]">{t("expenses.recurringDesc")}</p>
               </div>
             </div>
             <div
@@ -176,17 +233,17 @@ export default function ExpenseForm() {
           {form.isRecurring && (
             <div className="animate-fade-up">
               <Select
-                label="Recurrence"
+                label={t("expenses.recurrence")}
                 value={form.recurrenceRule}
                 onChange={(e) => update("recurrenceRule", e.target.value)}
                 options={[
-                  { value: "", label: "Select frequency" },
-                  { value: "DAILY", label: "Daily" },
-                  { value: "WEEKLY", label: "Weekly" },
-                  { value: "BIWEEKLY", label: "Biweekly" },
-                  { value: "MONTHLY", label: "Monthly" },
-                  { value: "QUARTERLY", label: "Quarterly" },
-                  { value: "YEARLY", label: "Yearly" },
+                  { value: "", label: t("expenses.selectFrequency") },
+                  { value: "DAILY", label: t("common.daily") },
+                  { value: "WEEKLY", label: t("common.weekly") },
+                  { value: "BIWEEKLY", label: t("common.biweekly") },
+                  { value: "MONTHLY", label: t("common.monthly") },
+                  { value: "QUARTERLY", label: t("common.quarterly") },
+                  { value: "YEARLY", label: t("common.yearly") },
                 ]}
               />
             </div>
@@ -201,14 +258,14 @@ export default function ExpenseForm() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  Saving...
+                  {t("common.loading")}
                 </span>
               ) : (
-                "Add Expense"
+                isEditMode ? t("common.save") : t("expenses.addExpense")
               )}
             </Button>
             <Button type="button" variant="secondary" size="lg" onClick={() => navigate("/expenses")}>
-              Cancel
+              {t("common.cancel")}
             </Button>
           </div>
         </form>

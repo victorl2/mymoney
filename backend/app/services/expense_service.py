@@ -1,6 +1,7 @@
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal
 
-from sqlalchemy import func, or_
+from sqlalchemy import extract, func, or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.category import Category
@@ -20,6 +21,7 @@ class ExpenseService:
         min_amount=None,
         max_amount=None,
         is_recurring: bool | None = None,
+        is_paid: bool | None = None,
         search: str | None = None,
         sort_by: str = "date",
         sort_direction: str = "desc",
@@ -40,6 +42,8 @@ class ExpenseService:
             query = query.filter(Expense.amount <= max_amount)
         if is_recurring is not None:
             query = query.filter(Expense.is_recurring == is_recurring)
+        if is_paid is not None:
+            query = query.filter(Expense.is_paid == is_paid)
         if search:
             pattern = f"%{search}%"
             query = query.filter(
@@ -101,6 +105,49 @@ class ExpenseService:
         self.db.delete(expense)
         self.db.commit()
         return True
+
+    def mark_expense_paid(self, expense_id: int, paid: bool) -> Expense | None:
+        expense = self.db.query(Expense).filter(Expense.id == expense_id).first()
+        if not expense:
+            return None
+
+        expense.is_paid = paid
+        expense.paid_at = datetime.utcnow() if paid else None
+        expense.updated_at = datetime.utcnow()
+        self.db.commit()
+        self.db.refresh(expense)
+        self.db.refresh(expense, attribute_names=["category"])
+        return expense
+
+    def get_expense_summary(self, month: int | None = None, year: int | None = None):
+        """Get expense summary for a given month/year. Defaults to current month."""
+        today = date.today()
+        target_month = month if month is not None else today.month
+        target_year = year if year is not None else today.year
+
+        query = self.db.query(Expense).filter(
+            extract("month", Expense.date) == target_month,
+            extract("year", Expense.date) == target_year,
+        )
+
+        expenses = query.all()
+
+        total_amount = sum((e.amount for e in expenses), Decimal("0"))
+        paid_amount = sum((e.amount for e in expenses if e.is_paid), Decimal("0"))
+        unpaid_amount = total_amount - paid_amount
+
+        total_count = len(expenses)
+        paid_count = sum(1 for e in expenses if e.is_paid)
+        unpaid_count = total_count - paid_count
+
+        return {
+            "total_amount": total_amount,
+            "paid_amount": paid_amount,
+            "unpaid_amount": unpaid_amount,
+            "total_count": total_count,
+            "paid_count": paid_count,
+            "unpaid_count": unpaid_count,
+        }
 
 
 class CategoryService:

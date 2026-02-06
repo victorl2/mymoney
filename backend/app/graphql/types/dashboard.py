@@ -38,6 +38,8 @@ class DashboardSummary:
     total_portfolio_value: Decimal
     total_portfolio_cost: Decimal
     net_worth: Decimal
+    total_monthly_income: Decimal
+    income_streams_count: int
     top_categories: list[CategorySummary]
     recent_expenses: list[ExpenseType]
     portfolio_allocation: list[AllocationSlice]

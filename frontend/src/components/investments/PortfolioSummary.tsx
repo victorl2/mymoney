@@ -1,11 +1,12 @@
 import Card from "../ui/Card";
+import { useCurrency } from "../../context/CurrencyContext";
 
 interface PortfolioSummaryProps {
   name: string;
-  totalValue: number;
-  totalCost: number;
-  totalGainLoss: number;
-  totalGainLossPercent: number;
+  totalValue: number | string;
+  totalCost: number | string;
+  totalGainLoss: number | string;
+  totalGainLossPercent: number | string;
   assetCount: number;
 }
 
@@ -17,7 +18,15 @@ export default function PortfolioSummary({
   totalGainLossPercent,
   assetCount,
 }: PortfolioSummaryProps) {
-  const isPositive = totalGainLoss >= 0;
+  const { currencySymbol } = useCurrency();
+
+  // Convert string values from GraphQL to numbers
+  const totalValueNum = Number(totalValue);
+  const totalCostNum = Number(totalCost);
+  const totalGainLossNum = Number(totalGainLoss);
+  const totalGainLossPercentNum = Number(totalGainLossPercent);
+
+  const isPositive = totalGainLossNum >= 0;
 
   return (
     <Card className="relative overflow-hidden">
@@ -67,7 +76,7 @@ export default function PortfolioSummary({
               </svg>
             )}
             <span className="font-mono text-sm font-semibold">
-              {isPositive ? "+" : ""}{totalGainLossPercent.toFixed(1)}%
+              {isPositive ? "+" : ""}{totalGainLossPercentNum.toFixed(1)}%
             </span>
           </div>
         </div>
@@ -77,13 +86,13 @@ export default function PortfolioSummary({
           <div>
             <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Total Value</p>
             <p className="font-mono text-2xl font-bold text-[var(--text-primary)] number-reveal">
-              ${totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {currencySymbol}{totalValueNum.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
           <div>
             <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Total Cost</p>
             <p className="font-mono text-xl font-semibold text-[var(--text-secondary)]">
-              ${totalCost.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {currencySymbol}{totalCostNum.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
           <div>
@@ -92,7 +101,7 @@ export default function PortfolioSummary({
               className="font-mono text-xl font-bold"
               style={{ color: isPositive ? "var(--accent-gain)" : "var(--accent-loss)" }}
             >
-              {isPositive ? "+" : ""}${totalGainLoss.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {isPositive ? "+" : "-"}{currencySymbol}{Math.abs(totalGainLossNum).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
         </div>

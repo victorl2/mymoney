@@ -29,6 +29,8 @@ export const GET_EXPENSES = gql`
         }
         isRecurring
         recurrenceRule
+        isPaid
+        paidAt
         createdAt
       }
       totalCount
@@ -53,8 +55,23 @@ export const GET_EXPENSE = gql`
       }
       isRecurring
       recurrenceRule
+      isPaid
+      paidAt
       createdAt
       updatedAt
+    }
+  }
+`;
+
+export const GET_EXPENSE_SUMMARY = gql`
+  query GetExpenseSummary($month: Int, $year: Int) {
+    expenseSummary(month: $month, year: $year) {
+      totalAmount
+      paidAmount
+      unpaidAmount
+      totalCount
+      paidCount
+      unpaidCount
     }
   }
 `;

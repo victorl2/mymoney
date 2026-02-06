@@ -2,36 +2,43 @@ import { useState } from "react";
 import { useMutation } from "@apollo/client/react";
 import { useNavigate } from "react-router-dom";
 import { CREATE_ASSET } from "../../graphql/mutations/investments";
+import { GET_PORTFOLIOS } from "../../graphql/queries/investments";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import Select from "../ui/Select";
 import Card from "../ui/Card";
+import { useCurrency } from "../../context/CurrencyContext";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface AssetFormProps {
   portfolioId: string;
 }
 
-const assetTypes = [
-  { value: "STOCK", label: "Stock" },
-  { value: "CRYPTO", label: "Crypto" },
-  { value: "FUND", label: "Fund" },
-  { value: "ETF", label: "ETF" },
-  { value: "BOND", label: "Bond" },
-  { value: "OTHER", label: "Other" },
-];
-
-const assetTypeColors: Record<string, string> = {
+const ASSET_TYPE_COLORS: Record<string, string> = {
   STOCK: "#a78bfa",
   CRYPTO: "#facc15",
   FUND: "#38bdf8",
   ETF: "#00ff88",
   BOND: "#f472b6",
+  FII: "#14b8a6",
   OTHER: "#fb923c",
 };
 
 export default function AssetForm({ portfolioId }: AssetFormProps) {
+  const { currencySymbol } = useCurrency();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
   const [createAsset, { loading }] = useMutation(CREATE_ASSET);
+
+  const assetTypes = [
+    { value: "STOCK", label: t("assetType.stock") },
+    { value: "CRYPTO", label: t("assetType.crypto") },
+    { value: "FUND", label: t("assetType.fund") },
+    { value: "ETF", label: t("assetType.etf") },
+    { value: "BOND", label: t("assetType.bond") },
+    { value: "FII", label: t("assetType.fii") },
+    { value: "OTHER", label: t("assetType.other") },
+  ];
 
   const [form, setForm] = useState({
     symbol: "",
@@ -62,6 +69,7 @@ export default function AssetForm({ portfolioId }: AssetFormProps) {
           notes: form.notes || null,
         },
       },
+      refetchQueries: [{ query: GET_PORTFOLIOS }],
     });
     navigate("/investments");
   };
@@ -69,7 +77,7 @@ export default function AssetForm({ portfolioId }: AssetFormProps) {
   const update = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
-  const selectedColor = assetTypeColors[form.assetType] || assetTypeColors.OTHER;
+  const selectedColor = ASSET_TYPE_COLORS[form.assetType] || ASSET_TYPE_COLORS.OTHER;
 
   return (
     <div className="animate-fade-up max-w-xl">
@@ -82,10 +90,10 @@ export default function AssetForm({ portfolioId }: AssetFormProps) {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Back to Investments
+          {t("common.back")} {t("nav.investments")}
         </button>
-        <h1 className="font-display text-3xl font-bold text-[var(--text-primary)]">Add Asset</h1>
-        <p className="text-sm text-[var(--text-secondary)] mt-1">Add a new asset to your portfolio</p>
+        <h1 className="font-display text-3xl font-bold text-[var(--text-primary)]">{t("investments.addAsset")}</h1>
+        <p className="text-sm text-[var(--text-secondary)] mt-1">{t("investments.subtitle")}</p>
       </div>
 
       <Card hover={false}>
@@ -94,7 +102,7 @@ export default function AssetForm({ portfolioId }: AssetFormProps) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
-                Symbol
+                {t("investments.symbol")}
               </label>
               <div className="relative">
                 <div
@@ -121,7 +129,7 @@ export default function AssetForm({ portfolioId }: AssetFormProps) {
               </div>
             </div>
             <Select
-              label="Type"
+              label={t("investments.type")}
               value={form.assetType}
               onChange={(e) => update("assetType", e.target.value)}
               options={assetTypes}
@@ -129,8 +137,8 @@ export default function AssetForm({ portfolioId }: AssetFormProps) {
           </div>
 
           <Input
-            label="Name"
-            placeholder="Apple Inc."
+            label={t("income.name")}
+            placeholder=""
             value={form.name}
             onChange={(e) => update("name", e.target.value)}
             required
@@ -138,7 +146,7 @@ export default function AssetForm({ portfolioId }: AssetFormProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Quantity"
+              label={t("investments.quantity")}
               type="number"
               step="any"
               min="0"
@@ -148,7 +156,7 @@ export default function AssetForm({ portfolioId }: AssetFormProps) {
               required
             />
             <Input
-              label="Purchase Price"
+              label={t("investments.purchasePrice")}
               type="number"
               step="0.01"
               min="0"
@@ -161,14 +169,14 @@ export default function AssetForm({ portfolioId }: AssetFormProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Purchase Date"
+              label={t("investments.purchaseDate")}
               type="date"
               value={form.purchaseDate}
               onChange={(e) => update("purchaseDate", e.target.value)}
               required
             />
             <Input
-              label="Current Price (optional)"
+              label={t("investments.currentPrice")}
               type="number"
               step="0.01"
               min="0"
@@ -179,8 +187,8 @@ export default function AssetForm({ portfolioId }: AssetFormProps) {
           </div>
 
           <Input
-            label="Notes (optional)"
-            placeholder="Additional notes..."
+            label={t("expenses.notesOptional")}
+            placeholder=""
             value={form.notes}
             onChange={(e) => update("notes", e.target.value)}
           />
@@ -188,9 +196,9 @@ export default function AssetForm({ portfolioId }: AssetFormProps) {
           {/* Cost preview */}
           {form.quantity && form.purchasePrice && (
             <div className="p-4 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
-              <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Total Cost</p>
+              <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">{t("investments.totalCost")}</p>
               <p className="font-mono text-xl font-bold text-[var(--text-primary)]">
-                ${(parseFloat(form.quantity) * parseFloat(form.purchasePrice)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {currencySymbol}{(parseFloat(form.quantity) * parseFloat(form.purchasePrice)).toLocaleString(language === "pt-BR" ? "pt-BR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
           )}
@@ -204,14 +212,14 @@ export default function AssetForm({ portfolioId }: AssetFormProps) {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  Saving...
+                  {t("common.loading")}
                 </span>
               ) : (
-                "Add Asset"
+                t("investments.addAsset")
               )}
             </Button>
             <Button type="button" variant="secondary" size="lg" onClick={() => navigate("/investments")}>
-              Cancel
+              {t("common.cancel")}
             </Button>
           </div>
         </form>
